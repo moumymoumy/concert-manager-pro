@@ -72,7 +72,8 @@ function GestionSalles() {
     charger();
   };
 
-  const supprimer = async (id: string) => {
+  const supprimer = async (id: string, nom: string) => {
+    if (!confirm(`Supprimer la salle "${nom}" ? Cette action est irréversible.`)) return;
     await supabase.from('cmp_salles').delete().eq('id', id);
     charger();
   };
@@ -120,7 +121,7 @@ function GestionSalles() {
                 {s.adresse ? `${s.adresse} · ` : ''}Capacité : {s.capacite} places
               </p>
             </div>
-            <button onClick={() => supprimer(s.id)} className="text-gray-300 hover:text-danger">
+            <button onClick={() => supprimer(s.id, s.nom)} className="text-gray-300 hover:text-danger">
               <Trash2 size={16} />
             </button>
           </div>
@@ -160,7 +161,8 @@ function GestionArtistes() {
     charger();
   };
 
-  const supprimer = async (id: string) => {
+  const supprimer = async (id: string, nom: string) => {
+    if (!confirm(`Supprimer l'artiste "${nom}" ? Cette action est irréversible.`)) return;
     await supabase.from('cmp_artistes').delete().eq('id', id);
     charger();
   };
@@ -205,7 +207,7 @@ function GestionArtistes() {
               <p className="text-sm font-medium text-brand-dark">{a.nom}</p>
               <p className="text-xs text-gray-400">{a.genre_musical || '—'}</p>
             </div>
-            <button onClick={() => supprimer(a.id)} className="text-gray-300 hover:text-danger">
+            <button onClick={() => supprimer(a.id, a.nom)} className="text-gray-300 hover:text-danger">
               <Trash2 size={16} />
             </button>
           </div>
@@ -245,7 +247,8 @@ function GestionSaisons() {
     charger();
   };
 
-  const supprimer = async (id: string) => {
+  const supprimer = async (id: string, nom: string) => {
+    if (!confirm(`Supprimer la saison "${nom}" ? Cette action est irréversible.`)) return;
     await supabase.from('cmp_saisons').delete().eq('id', id);
     charger();
   };
@@ -292,7 +295,7 @@ function GestionSaisons() {
                 {s.date_debut || '?'} → {s.date_fin || '?'}
               </p>
             </div>
-            <button onClick={() => supprimer(s.id)} className="text-gray-300 hover:text-danger">
+            <button onClick={() => supprimer(s.id, s.nom)} className="text-gray-300 hover:text-danger">
               <Trash2 size={16} />
             </button>
           </div>

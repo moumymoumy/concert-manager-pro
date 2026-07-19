@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Concert, Salle, Artiste, Revenu, DepenseOperationnelle } from '@/lib/types';
 import { calculerResultatConcert, formaterMontant } from '@/lib/calculs/rentabiliteConcert';
@@ -14,6 +15,7 @@ const CATEGORIES_DEPENSES = [
 ];
 
 export default function FicheConcertPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [concert, setConcert] = useState<Concert | null>(null);
   const [salle, setSalle] = useState<Salle | null>(null);
   const [artiste, setArtiste] = useState<Artiste | null>(null);
@@ -64,6 +66,7 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
   };
 
   const supprimerRevenu = async (id: string) => {
+    if (!confirm('Supprimer cette recette ?')) return;
     await supabase.from('cmp_revenus').delete().eq('id', id);
     charger();
   };
@@ -80,8 +83,15 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
   };
 
   const supprimerDepense = async (id: string) => {
+    if (!confirm('Supprimer cette dépense ?')) return;
     await supabase.from('cmp_depenses_operationnelles').delete().eq('id', id);
     charger();
+  };
+
+  const supprimerConcert = async () => {
+    if (!confirm('Supprimer définitivement ce concert, ainsi que toutes ses recettes et dépenses ? Cette action est irréversible.')) return;
+    await supabase.from('cmp_concerts').delete().eq('id', params.id);
+    router.push('/concerts');
   };
 
   if (chargement) return <p className="text-sm text-gray-400">Chargement...</p>;
@@ -100,7 +110,15 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
             {salle?.nom ?? 'Salle non renseignée'} {salle?.capacite ? `· ${salle.capacite} places` : ''}
           </p>
         </div>
-        <StatusBadge statut={resultat.statutRentabilite} />
+        <div className="flex items-center gap-3">
+          <StatusBadge statut={resultat.statutRentabilite} />
+          <button
+            onClick={supprimerConcert}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:border-danger hover:text-danger"
+          >
+            <Trash2 size={14} /> Supprimer le concert
+          </button>
+        </div>
       </div>
 
       {/* KPI résumé */}
