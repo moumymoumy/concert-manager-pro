@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Concert, Salle, Artiste, Revenu, DepenseOperationnelle } from '@/lib/types';
 import { calculerResultatConcert, formaterMontant } from '@/lib/calculs/rentabiliteConcert';
 import StatusBadge from '@/components/StatusBadge';
-import { Trash2, Plus, Pencil } from 'lucide-react';
+import { Trash2, Plus, Pencil, Check, X } from 'lucide-react';
 
 const TYPES_REVENUS = ['Bar', 'Sponsor', 'Subvention', 'Merchandising', 'Autre'];
 const CATEGORIES_DEPENSES = [
@@ -27,6 +27,11 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
   const [montantRevenu, setMontantRevenu] = useState('');
   const [categorieDepense, setCategorieDepense] = useState(CATEGORIES_DEPENSES[0]);
   const [montantDepense, setMontantDepense] = useState('');
+
+  const [editionRevenuId, setEditionRevenuId] = useState<string | null>(null);
+  const [editionRevenuMontant, setEditionRevenuMontant] = useState('');
+  const [editionDepenseId, setEditionDepenseId] = useState<string | null>(null);
+  const [editionDepenseMontant, setEditionDepenseMontant] = useState('');
 
   const charger = useCallback(async () => {
     const { data: c } = await supabase.from('cmp_concerts').select('*').eq('id', params.id).single();
@@ -71,6 +76,17 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
     charger();
   };
 
+  const commencerEditionRevenu = (r: Revenu) => {
+    setEditionRevenuId(r.id);
+    setEditionRevenuMontant(String(r.montant));
+  };
+
+  const sauvegarderEditionRevenu = async (id: string) => {
+    await supabase.from('cmp_revenus').update({ montant: Number(editionRevenuMontant) || 0 }).eq('id', id);
+    setEditionRevenuId(null);
+    charger();
+  };
+
   const ajouterDepense = async () => {
     if (!montantDepense) return;
     await supabase.from('cmp_depenses_operationnelles').insert({
@@ -85,6 +101,17 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
   const supprimerDepense = async (id: string) => {
     if (!confirm('Supprimer cette dépense ?')) return;
     await supabase.from('cmp_depenses_operationnelles').delete().eq('id', id);
+    charger();
+  };
+
+  const commencerEditionDepense = (d: DepenseOperationnelle) => {
+    setEditionDepenseId(d.id);
+    setEditionDepenseMontant(String(d.montant));
+  };
+
+  const sauvegarderEditionDepense = async (id: string) => {
+    await supabase.from('cmp_depenses_operationnelles').update({ montant: Number(editionDepenseMontant) || 0 }).eq('id', id);
+    setEditionDepenseId(null);
     charger();
   };
 
@@ -172,10 +199,40 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
           <div className="mt-3 divide-y divide-gray-100">
             {revenus.map((r) => (
               <div key={r.id} className="flex items-center justify-between py-2 text-sm">
-                <span>{r.type} — {formaterMontant(r.montant)}</span>
-                <button onClick={() => supprimerRevenu(r.id)} className="text-gray-300 hover:text-danger">
-                  <Trash2 size={14} />
-                </button>
+                {editionRevenuId === r.id ? (
+                  <>
+                    <span className="flex items-center gap-2">
+                      {r.type} —
+                      <input
+                        type="number"
+                        autoFocus
+                        value={editionRevenuMontant}
+                        onChange={(e) => setEditionRevenuMontant(e.target.value)}
+                        className="w-24 rounded border border-gray-200 px-2 py-1 text-sm"
+                      />
+                    </span>
+                    <span className="flex gap-2">
+                      <button onClick={() => sauvegarderEditionRevenu(r.id)} className="text-success hover:text-success/70">
+                        <Check size={14} />
+                      </button>
+                      <button onClick={() => setEditionRevenuId(null)} className="text-gray-300 hover:text-gray-500">
+                        <X size={14} />
+                      </button>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span>{r.type} — {formaterMontant(r.montant)}</span>
+                    <span className="flex gap-2">
+                      <button onClick={() => commencerEditionRevenu(r)} className="text-gray-300 hover:text-brand-dark">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => supprimerRevenu(r.id)} className="text-gray-300 hover:text-danger">
+                        <Trash2 size={14} />
+                      </button>
+                    </span>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -204,10 +261,40 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
           <div className="mt-3 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
             {depenses.map((d) => (
               <div key={d.id} className="flex items-center justify-between border-b border-gray-50 py-2 text-sm">
-                <span>{d.categorie} — {formaterMontant(d.montant)}</span>
-                <button onClick={() => supprimerDepense(d.id)} className="text-gray-300 hover:text-danger">
-                  <Trash2 size={14} />
-                </button>
+                {editionDepenseId === d.id ? (
+                  <>
+                    <span className="flex items-center gap-2">
+                      {d.categorie} —
+                      <input
+                        type="number"
+                        autoFocus
+                        value={editionDepenseMontant}
+                        onChange={(e) => setEditionDepenseMontant(e.target.value)}
+                        className="w-24 rounded border border-gray-200 px-2 py-1 text-sm"
+                      />
+                    </span>
+                    <span className="flex gap-2">
+                      <button onClick={() => sauvegarderEditionDepense(d.id)} className="text-success hover:text-success/70">
+                        <Check size={14} />
+                      </button>
+                      <button onClick={() => setEditionDepenseId(null)} className="text-gray-300 hover:text-gray-500">
+                        <X size={14} />
+                      </button>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span>{d.categorie} — {formaterMontant(d.montant)}</span>
+                    <span className="flex gap-2">
+                      <button onClick={() => commencerEditionDepense(d)} className="text-gray-300 hover:text-brand-dark">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => supprimerDepense(d.id)} className="text-gray-300 hover:text-danger">
+                        <Trash2 size={14} />
+                      </button>
+                    </span>
+                  </>
+                )}
               </div>
             ))}
           </div>
