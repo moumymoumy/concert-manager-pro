@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Salle, Artiste, Saison } from '@/lib/types';
+import { Salle, Artiste, Saison, ChargeFixe } from '@/lib/types';
 import { Trash2, Plus } from 'lucide-react';
 
-type Onglet = 'salles' | 'artistes' | 'saisons';
+type Onglet = 'salles' | 'artistes' | 'saisons' | 'charges-fixes';
 
 export default function ParametresPage() {
   const [onglet, setOnglet] = useState<Onglet>('salles');
@@ -18,7 +18,7 @@ export default function ParametresPage() {
       </p>
 
       <div className="mt-6 flex gap-2 border-b border-gray-200">
-        {(['salles', 'artistes', 'saisons'] as Onglet[]).map((tab) => (
+        {(['salles', 'artistes', 'saisons', 'charges-fixes'] as Onglet[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setOnglet(tab)}
@@ -28,7 +28,7 @@ export default function ParametresPage() {
                 : 'border-transparent text-gray-400 hover:text-gray-600'
             }`}
           >
-            {tab}
+            {tab === 'charges-fixes' ? 'Charges fixes' : tab}
           </button>
         ))}
       </div>
@@ -37,6 +37,7 @@ export default function ParametresPage() {
         {onglet === 'salles' && <GestionSalles />}
         {onglet === 'artistes' && <GestionArtistes />}
         {onglet === 'saisons' && <GestionSaisons />}
+        {onglet === 'charges-fixes' && <GestionChargesFixes />}
       </div>
     </div>
   );
@@ -301,6 +302,122 @@ function GestionSaisons() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function GestionChargesFixes() {
+  const [charges, setCharges] = useState<ChargeFixe[]>([]);
+  const [categorie, setCategorie] = useState('');
+  const [montant, setMontant] = useState('');
+  const [periodicite, setPeriodicite] = useState<'hebdomadaire' | 'mensuelle' | 'annuelle'>('mensuelle');
+  const [chargement, setChargement] = useState(true);
+
+  const charger = async () => {
+    const { data } = await supabase.from('cmp_charges_fixes').select('*').order('categorie');
+    setCharges((data as ChargeFixe[]) ?? []);
+    setChargement(false);
+  };
+
+  useEffect(() => {
+    charger();
+  }, []);
+
+  const ajouter = async () => {
+    if (!categorie.trim() || !montant) return;
+    await supabase.from('cmp_charges_fixes').insert({
+      categorie,
+      montant: Number(montant) || 0,
+      periodicite,
+    });
+    setCategorie('');
+    setMontant('');
+    charger();
+  };
+
+  const supprimer = async (id: string, cat: string) => {
+    if (!confirm(`Supprimer la charge fixe "${cat}" ?`)) return;
+    await supabase.from('cmp_charges_fixes').delete().eq('id', id);
+    charger();
+  };
+
+  const journalier = (c: ChargeFixe) => {
+    if (c.periodicite === 'hebdomadaire') return c.montant / 7;
+    if (c.periodicite === 'mensuelle') return c.montant / 30.4166;
+    return c.montant / 365;
+  };
+
+  const totalJournalier = charges.reduce((t, c) => t + journalier(c), 0);
+  const labelPeriodicite = { hebdomadaire: '/ semaine', mensuelle: '/ mois', annuelle: '/ an' };
+
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <p className="mb-4 text-xs text-gray-400">
+        Ces charges (loyer, assurance annuelle, comptabilité...) sont automatiquement ramenées à un
+        équivalent journalier, puis imputées à chaque concert dans son Résultat économique.
+      </p>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <input
+          placeholder="Catégorie (ex: Loyer)"
+          value={categorie}
+          onChange={(e) => setCategorie(e.target.value)}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        />
+        <input
+          placeholder="Montant €"
+          type="number"
+          value={montant}
+          onChange={(e) => setMontant(e.target.value)}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        />
+        <select
+          value={periodicite}
+          onChange={(e) => setPeriodicite(e.target.value as typeof periodicite)}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        >
+          <option value="hebdomadaire">Par semaine</option>
+          <option value="mensuelle">Par mois</option>
+          <option value="annuelle">Par an</option>
+        </select>
+        <button
+          onClick={ajouter}
+          className="flex items-center justify-center gap-2 rounded-lg bg-brand-dark px-3 py-2 text-sm text-white hover:bg-brand-dark/90"
+        >
+          <Plus size={16} /> Ajouter
+        </button>
+      </div>
+
+      <div className="mt-6 divide-y divide-gray-100">
+        {chargement && <p className="text-sm text-gray-400">Chargement...</p>}
+        {!chargement && charges.length === 0 && (
+          <p className="text-sm text-gray-400">Aucune charge fixe enregistrée pour l'instant.</p>
+        )}
+        {charges.map((c) => (
+          <div key={c.id} className="flex items-center justify-between py-3">
+            <div>
+              <p className="text-sm font-medium text-brand-dark">{c.categorie}</p>
+              <p className="text-xs text-gray-400">
+                {c.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}{' '}
+                {labelPeriodicite[c.periodicite]} · soit{' '}
+                {journalier(c).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} / jour
+              </p>
+            </div>
+            <button onClick={() => supprimer(c.id, c.categorie)} className="text-gray-300 hover:text-danger">
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {charges.length > 0 && (
+        <div className="mt-4 rounded-lg bg-surface-light px-4 py-3 text-sm font-medium text-brand-dark">
+          Total des charges fixes : {totalJournalier.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} / jour
+          <span className="ml-1 font-normal text-gray-400">
+            (imputé automatiquement à chaque concert dans son Résultat économique)
+          </span>
+        </div>
+      )}
     </div>
   );
 }

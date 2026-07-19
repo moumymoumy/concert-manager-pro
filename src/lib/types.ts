@@ -34,6 +34,15 @@ export interface Concert {
   statut: 'planifie' | 'realise' | 'annule';
 }
 
+export type Periodicite = 'hebdomadaire' | 'mensuelle' | 'annuelle';
+
+export interface ChargeFixe {
+  id: string;
+  categorie: string;
+  montant: number;
+  periodicite: Periodicite;
+}
+
 export interface Revenu {
   id: string;
   concert_id: string;

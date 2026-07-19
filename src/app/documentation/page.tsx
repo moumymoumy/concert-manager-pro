@@ -157,6 +157,31 @@ export default function DocumentationPage() {
       ),
     },
     {
+      id: 'charges-fixes',
+      titre: '🏢 Les Charges fixes & le Résultat économique',
+      contenu: (
+        <>
+          <p>
+            Le <strong>Résultat opérationnel</strong> (celui affiché avec le badge 🟢🟠🔴) ne tient compte que
+            des coûts directement liés à la soirée. Il ne dit pas si votre <strong>activité globale</strong> est
+            viable une fois le loyer, l'assurance annuelle, la comptabilité... pris en compte.
+          </p>
+          <p>C'est le rôle du <strong>Résultat économique</strong>, calculé automatiquement dès que vous avez renseigné vos charges fixes.</p>
+          <p><strong>Comment le configurer :</strong></p>
+          <ol className="list-decimal list-inside space-y-1 ml-2">
+            <li>Allez dans <strong>Paramètres → Charges fixes</strong></li>
+            <li>Ajoutez chaque charge avec son montant et sa <strong>périodicité de facturation réelle</strong> (par semaine, par mois, ou par an — inutile de convertir vous-même)</li>
+          </ol>
+          <p><strong>Comment le calcul fonctionne :</strong> chaque charge est automatiquement ramenée à un équivalent journalier (montant ÷ 7 pour une charge hebdomadaire, ÷ 30,4166 pour une charge mensuelle, ÷ 365 pour une charge annuelle), puis additionnée. Ce total journalier est ensuite imputé à chaque concert (1 jour de charges fixes par concert), pour obtenir :</p>
+          <ul className="list-disc list-inside space-y-1 ml-2">
+            <li><strong>Coût économique global</strong> = coûts opérationnels + charge fixe imputée</li>
+            <li><strong>Résultat économique</strong> = revenu total − coût économique global</li>
+          </ul>
+          <p className="text-xs text-gray-400">Ce résultat est visible sur la fiche de chaque concert, et cumulé sur le Tableau de bord.</p>
+        </>
+      ),
+    },
+    {
       id: 'lexique',
       titre: '📖 Lexique des indicateurs',
       contenu: (

@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Concert, Salle, Artiste, Revenu, DepenseOperationnelle } from '@/lib/types';
+import { Concert, Salle, Artiste, Revenu, DepenseOperationnelle, ChargeFixe } from '@/lib/types';
 import { calculerResultatConcert, formaterMontant } from '@/lib/calculs/rentabiliteConcert';
+import { totalChargesFixesJournalier, calculerResultatEconomique } from '@/lib/calculs/economique';
 import StatusBadge from '@/components/StatusBadge';
 import { Trash2, Plus, Pencil, Check, X } from 'lucide-react';
 
@@ -21,6 +22,7 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
   const [artiste, setArtiste] = useState<Artiste | null>(null);
   const [revenus, setRevenus] = useState<Revenu[]>([]);
   const [depenses, setDepenses] = useState<DepenseOperationnelle[]>([]);
+  const [chargesFixes, setChargesFixes] = useState<ChargeFixe[]>([]);
   const [chargement, setChargement] = useState(true);
 
   const [typeRevenu, setTypeRevenu] = useState(TYPES_REVENUS[0]);
@@ -41,17 +43,19 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
     }
     setConcert(c as Concert);
 
-    const [{ data: s }, { data: a }, { data: rev }, { data: dep }] = await Promise.all([
+    const [{ data: s }, { data: a }, { data: rev }, { data: dep }, { data: cf }] = await Promise.all([
       c.salle_id ? supabase.from('cmp_salles').select('*').eq('id', c.salle_id).single() : Promise.resolve({ data: null }),
       c.artiste_id ? supabase.from('cmp_artistes').select('*').eq('id', c.artiste_id).single() : Promise.resolve({ data: null }),
       supabase.from('cmp_revenus').select('*').eq('concert_id', params.id),
       supabase.from('cmp_depenses_operationnelles').select('*').eq('concert_id', params.id),
+      supabase.from('cmp_charges_fixes').select('*'),
     ]);
 
     setSalle((s as Salle) ?? null);
     setArtiste((a as Artiste) ?? null);
     setRevenus((rev as Revenu[]) ?? []);
     setDepenses((dep as DepenseOperationnelle[]) ?? []);
+    setChargesFixes((cf as ChargeFixe[]) ?? []);
     setChargement(false);
   }, [params.id]);
 
@@ -125,6 +129,8 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
   if (!concert) return <p className="text-sm text-gray-400">Concert introuvable.</p>;
 
   const resultat = calculerResultatConcert(concert, revenus, depenses, salle?.capacite ?? 0);
+  const chargesJournalieres = totalChargesFixesJournalier(chargesFixes);
+  const eco = calculerResultatEconomique(resultat, chargesJournalieres);
 
   return (
     <div>
@@ -160,6 +166,35 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
         <Kpi label="Coûts opérationnels" valeur={formaterMontant(resultat.coutsOperationnels)} />
         <Kpi label="Résultat opérationnel" valeur={formaterMontant(resultat.resultatOperationnel)} accent />
         <Kpi label="Taux de remplissage" valeur={`${resultat.tauxRemplissage.toFixed(0)} %`} />
+      </div>
+
+      {/* Résultat économique */}
+      <div className="mt-6 rounded-xl bg-white p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-brand-dark">Résultat économique (avec charges de structure)</h2>
+        <p className="mt-1 text-xs text-gray-400">
+          Intègre une part de vos charges fixes (loyer, assurance annuelle...) en plus des coûts propres à cette soirée.
+          {chargesFixes.length === 0 && ' Aucune charge fixe enregistrée — configurez-les dans Paramètres → Charges fixes.'}
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div>
+            <p className="text-xs text-gray-400">Charge fixe imputée</p>
+            <p className="text-sm font-medium text-gray-700">{formaterMontant(eco.chargeFixeImputee)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Coût économique global</p>
+            <p className="text-sm font-medium text-gray-700">{formaterMontant(eco.coutEconomiqueGlobal)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Résultat économique</p>
+            <p className={`text-sm font-semibold ${eco.resultatEconomique >= 0 ? 'text-success' : 'text-danger'}`}>
+              {formaterMontant(eco.resultatEconomique)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Marge économique</p>
+            <p className="text-sm font-medium text-gray-700">{eco.margeEconomique.toFixed(1)} %</p>
+          </div>
+        </div>
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">

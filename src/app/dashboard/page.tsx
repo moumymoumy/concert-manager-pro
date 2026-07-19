@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Concert, Salle, Revenu, DepenseOperationnelle } from '@/lib/types';
+import { Concert, Salle, Revenu, DepenseOperationnelle, ChargeFixe } from '@/lib/types';
 import { calculerResultatConcert, formaterMontant } from '@/lib/calculs/rentabiliteConcert';
+import { totalChargesFixesJournalier, calculerResultatEconomique } from '@/lib/calculs/economique';
 
 export default function DashboardPage() {
   const [chargement, setChargement] = useState(true);
@@ -15,15 +16,18 @@ export default function DashboardPage() {
     spectateursMoyen: 0,
     tauxRemplissageMoyen: 0,
     coutMoyenSoiree: 0,
+    chargesFixesJournalieres: 0,
+    resultatEconomiqueGlobal: 0,
   });
 
   useEffect(() => {
     const charger = async () => {
-      const [{ data: concerts }, { data: salles }, { data: revenus }, { data: depenses }] = await Promise.all([
+      const [{ data: concerts }, { data: salles }, { data: revenus }, { data: depenses }, { data: chargesFixesData }] = await Promise.all([
         supabase.from('cmp_concerts').select('*'),
         supabase.from('cmp_salles').select('*'),
         supabase.from('cmp_revenus').select('*'),
         supabase.from('cmp_depenses_operationnelles').select('*'),
+        supabase.from('cmp_charges_fixes').select('*'),
       ]);
 
       const sallesMap = new Map((salles as Salle[] ?? []).map((s) => [s.id, s]));
@@ -49,6 +53,12 @@ export default function DashboardPage() {
       const tauxRemplissageMoyen = resultats.reduce((t, r) => t + r.tauxRemplissage, 0) / nbConcerts;
       const coutMoyenSoiree = resultats.reduce((t, r) => t + r.coutsOperationnels, 0) / nbConcerts;
 
+      const chargesFixesJournalieres = totalChargesFixesJournalier((chargesFixesData as ChargeFixe[]) ?? []);
+      const resultatEconomiqueGlobal = resultats.reduce((t, r) => {
+        const eco = calculerResultatEconomique(r, chargesFixesJournalieres);
+        return t + eco.resultatEconomique;
+      }, 0);
+
       setKpis({
         chiffreAffaires,
         resultatOperationnel,
@@ -57,6 +67,8 @@ export default function DashboardPage() {
         spectateursMoyen,
         tauxRemplissageMoyen,
         coutMoyenSoiree,
+        chargesFixesJournalieres,
+        resultatEconomiqueGlobal,
       });
       setChargement(false);
     };
@@ -89,7 +101,19 @@ export default function DashboardPage() {
           <Kpi label="Spectateurs moyens" valeur={kpis.spectateursMoyen.toFixed(0)} />
           <Kpi label="Taux de remplissage moyen" valeur={`${kpis.tauxRemplissageMoyen.toFixed(0)} %`} />
           <Kpi label="Coût moyen d'une soirée" valeur={formaterMontant(kpis.coutMoyenSoiree)} />
+          <Kpi
+            label="Résultat économique global"
+            valeur={formaterMontant(kpis.resultatEconomiqueGlobal)}
+            accent
+          />
+          <Kpi label="Charges fixes" valeur={`${formaterMontant(kpis.chargesFixesJournalieres)} / jour`} />
         </div>
+      )}
+
+      {!chargement && kpis.nbConcerts > 0 && kpis.chargesFixesJournalieres === 0 && (
+        <p className="mt-3 text-xs text-warning">
+          ⚠️ Aucune charge fixe enregistrée — le "Résultat économique" ci-dessus ne reflète encore que le résultat opérationnel. Configurez vos charges dans Paramètres → Charges fixes pour un calcul complet.
+        </p>
       )}
 
       <p className="mt-8 text-xs text-gray-400">
