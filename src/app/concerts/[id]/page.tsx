@@ -180,15 +180,15 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
         <h2 className="text-sm font-semibold text-brand-dark">Résultat économique (avec charges de structure)</h2>
         <p className="mt-1 text-xs text-gray-400">
           Intègre une part de vos charges fixes (loyer, assurance annuelle...) en plus des coûts propres à cette soirée.
-          {chargesFixes.length === 0 && (
-            <>
-              {' '}Aucune charge fixe enregistrée.{' '}
-              <Link href="/parametres?onglet=charges-fixes" className="font-medium text-brand-dark underline hover:no-underline">
-                Configurer mes charges fixes →
-              </Link>
-            </>
-          )}
         </p>
+        {chargesFixes.length === 0 && (
+          <Link
+            href="/parametres?onglet=charges-fixes"
+            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-warning/10 px-4 py-2.5 text-sm font-medium text-warning hover:bg-warning/20"
+          >
+            ⚠️ Aucune charge fixe enregistrée — Configurer mes charges fixes →
+          </Link>
+        )}
         <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div>
             <p className="text-xs text-gray-400">Charge fixe imputée</p>

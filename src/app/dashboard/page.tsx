@@ -112,12 +112,12 @@ export default function DashboardPage() {
       )}
 
       {!chargement && kpis.nbConcerts > 0 && kpis.chargesFixesJournalieres === 0 && (
-        <p className="mt-3 text-xs text-warning">
-          ⚠️ Aucune charge fixe enregistrée — le "Résultat économique" ci-dessus ne reflète encore que le résultat opérationnel.{' '}
-          <Link href="/parametres?onglet=charges-fixes" className="font-medium underline hover:no-underline">
-            Configurer mes charges fixes →
-          </Link>
-        </p>
+        <Link
+          href="/parametres?onglet=charges-fixes"
+          className="mt-4 flex items-center gap-2 rounded-lg bg-warning/10 px-4 py-2.5 text-sm font-medium text-warning hover:bg-warning/20 w-fit"
+        >
+          ⚠️ Aucune charge fixe enregistrée — Configurer mes charges fixes →
+        </Link>
       )}
 
       <p className="mt-8 text-xs text-gray-400">
