@@ -9,8 +9,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-   RUN mkdir -p public
-   RUN npm run build
+RUN npm run build
 
 # --- Étape 3 : image finale, allégée ---
 FROM node:20-alpine AS runner
