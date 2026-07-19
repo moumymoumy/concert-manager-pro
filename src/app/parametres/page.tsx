@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Salle, Artiste, Saison, ChargeFixe } from '@/lib/types';
 import { Trash2, Plus } from 'lucide-react';
@@ -8,7 +9,17 @@ import { Trash2, Plus } from 'lucide-react';
 type Onglet = 'salles' | 'artistes' | 'saisons' | 'charges-fixes';
 
 export default function ParametresPage() {
-  const [onglet, setOnglet] = useState<Onglet>('salles');
+  return (
+    <Suspense fallback={<p className="text-sm text-gray-400">Chargement...</p>}>
+      <ParametresContenu />
+    </Suspense>
+  );
+}
+
+function ParametresContenu() {
+  const searchParams = useSearchParams();
+  const ongletDemande = searchParams.get('onglet') as Onglet | null;
+  const [onglet, setOnglet] = useState<Onglet>(ongletDemande ?? 'salles');
 
   return (
     <div>

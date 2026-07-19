@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { Concert, Salle, Artiste, Revenu, DepenseOperationnelle, ChargeFixe } from '@/lib/types';
 import { calculerResultatConcert, formaterMontant } from '@/lib/calculs/rentabiliteConcert';
@@ -179,7 +180,14 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
         <h2 className="text-sm font-semibold text-brand-dark">Résultat économique (avec charges de structure)</h2>
         <p className="mt-1 text-xs text-gray-400">
           Intègre une part de vos charges fixes (loyer, assurance annuelle...) en plus des coûts propres à cette soirée.
-          {chargesFixes.length === 0 && ' Aucune charge fixe enregistrée — configurez-les dans Paramètres → Charges fixes.'}
+          {chargesFixes.length === 0 && (
+            <>
+              {' '}Aucune charge fixe enregistrée.{' '}
+              <Link href="/parametres?onglet=charges-fixes" className="font-medium text-brand-dark underline hover:no-underline">
+                Configurer mes charges fixes →
+              </Link>
+            </>
+          )}
         </p>
         <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div>

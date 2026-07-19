@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { Concert, Salle, Revenu, DepenseOperationnelle, ChargeFixe } from '@/lib/types';
 import { calculerResultatConcert, formaterMontant } from '@/lib/calculs/rentabiliteConcert';
@@ -112,7 +113,10 @@ export default function DashboardPage() {
 
       {!chargement && kpis.nbConcerts > 0 && kpis.chargesFixesJournalieres === 0 && (
         <p className="mt-3 text-xs text-warning">
-          ⚠️ Aucune charge fixe enregistrée — le "Résultat économique" ci-dessus ne reflète encore que le résultat opérationnel. Configurez vos charges dans Paramètres → Charges fixes pour un calcul complet.
+          ⚠️ Aucune charge fixe enregistrée — le "Résultat économique" ci-dessus ne reflète encore que le résultat opérationnel.{' '}
+          <Link href="/parametres?onglet=charges-fixes" className="font-medium underline hover:no-underline">
+            Configurer mes charges fixes →
+          </Link>
         </p>
       )}
 
