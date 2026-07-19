@@ -64,7 +64,10 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
   }, [charger]);
 
   const ajouterRevenu = async () => {
-    if (!montantRevenu) return;
+    if (!montantRevenu || Number(montantRevenu) <= 0) {
+      alert('Merci de renseigner un montant supérieur à 0.');
+      return;
+    }
     await supabase.from('cmp_revenus').insert({
       concert_id: params.id,
       type: typeRevenu,
@@ -92,7 +95,10 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
   };
 
   const ajouterDepense = async () => {
-    if (!montantDepense) return;
+    if (!montantDepense || Number(montantDepense) <= 0) {
+      alert('Merci de renseigner un montant supérieur à 0.');
+      return;
+    }
     await supabase.from('cmp_depenses_operationnelles').insert({
       concert_id: params.id,
       categorie: categorieDepense,

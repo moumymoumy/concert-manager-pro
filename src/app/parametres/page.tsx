@@ -61,7 +61,10 @@ function GestionSalles() {
   }, []);
 
   const ajouter = async () => {
-    if (!nom.trim()) return;
+    if (!nom.trim()) {
+      alert('Merci de renseigner un nom avant d\'ajouter.');
+      return;
+    }
     await supabase.from('cmp_salles').insert({
       nom,
       adresse: adresse || null,
@@ -150,7 +153,10 @@ function GestionArtistes() {
   }, []);
 
   const ajouter = async () => {
-    if (!nom.trim()) return;
+    if (!nom.trim()) {
+      alert('Merci de renseigner un nom avant d\'ajouter.');
+      return;
+    }
     await supabase.from('cmp_artistes').insert({
       nom,
       genre_musical: genre || null,
@@ -236,7 +242,10 @@ function GestionSaisons() {
   }, []);
 
   const ajouter = async () => {
-    if (!nom.trim()) return;
+    if (!nom.trim()) {
+      alert('Merci de renseigner un nom avant d\'ajouter.');
+      return;
+    }
     await supabase.from('cmp_saisons').insert({
       nom,
       date_debut: debut || null,
@@ -324,7 +333,14 @@ function GestionChargesFixes() {
   }, []);
 
   const ajouter = async () => {
-    if (!categorie.trim() || !montant) return;
+    if (!categorie.trim()) {
+      alert('Merci de renseigner une catégorie (ex: "Loyer") avant d\'ajouter.');
+      return;
+    }
+    if (!montant || Number(montant) <= 0) {
+      alert('Merci de renseigner un montant supérieur à 0.');
+      return;
+    }
     await supabase.from('cmp_charges_fixes').insert({
       categorie,
       montant: Number(montant) || 0,
