@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Concert, Salle, Artiste, Revenu, DepenseOperationnelle } from '@/lib/types';
 import { calculerResultatConcert, formaterMontant } from '@/lib/calculs/rentabiliteConcert';
 import StatusBadge from '@/components/StatusBadge';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Pencil } from 'lucide-react';
 
 const TYPES_REVENUS = ['Bar', 'Sponsor', 'Subvention', 'Merchandising', 'Autre'];
 const CATEGORIES_DEPENSES = [
@@ -112,6 +112,12 @@ export default function FicheConcertPage({ params }: { params: { id: string } })
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge statut={resultat.statutRentabilite} />
+          <button
+            onClick={() => router.push(`/concerts/${params.id}/modifier`)}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:border-brand-dark hover:text-brand-dark"
+          >
+            <Pencil size={14} /> Modifier
+          </button>
           <button
             onClick={supprimerConcert}
             className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:border-danger hover:text-danger"
